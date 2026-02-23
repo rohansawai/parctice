@@ -90,4 +90,43 @@ class Question(Post):
     def add_answer(self, answer: 'Answer'):
         self.answers.append(answer)
 
+    def accept_answer(self, answer: 'Answer'):
+        with self._lock:
+            # Only the question author can accept ans answer; Author is not allowed to answer his own question
+            if(self.author.get_id() != answer.get_author().get_id() and self.accepted_answer is None):
+                self.accepted_answer  = answer
+                answer.set_accepted(True)
+
+                # Import here to avoid circular dependency
+                from event import Event
+                self.notify_obervers(Event(EventType.ACCEPT_ANSWER, answer.get_author(), answer))
+
+    def get_title(self) -> str:
+        return self.title
     
+    def get_tags(self) -> Set[Tag]:
+        return self.tags
+    
+    def get_answer(self) -> List['Answer']:
+        return self.answers
+    
+    def get_accepted_answer(self) -> Optional['Answer']:
+        return self.accepted_answer
+    
+
+class Answer(Post):
+    def __init__(self, body: str, author: User):
+        super().__init__(str(uuid.uuid4()), body, author)
+        self.is_accepted = False
+
+    def set_accepted(self, accepted: bool):
+        self.is_accepted = accepted
+
+    def is_accepted_answer(self) -> bool:
+        return self.is_accepted
+
+
+class Comment(Content):
+    def __init__(self, body: str, author: User):
+        super().__init__(str(uuid.uuid4()), body, author)
+        
