@@ -103,4 +103,3 @@ class ParkingSpot(object):
 
     def remove_vehicle(self):
         pass
-    
